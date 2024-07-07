@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import avatar from '../assets/profile.png'
 import { Toaster } from 'react-hot-toast';
-import { passwordValidate } from '../helper/validate'
+import { validateRegisterForm } from '../helper/validate'
 import fileToBase64 from '../helper/convert';
 
 export default function Register() {
@@ -22,20 +22,29 @@ export default function Register() {
     }))
   }
 
-  const handleFileChange = (e) => {
-    const file = e.target.value;
+  const handleFileChange = async(e) => {
+    const file = e.target.files[0]
+    console.log(e, file, fileToBase64(file));
     if(file){
-      setRegister(prevRegister =>({...prevRegister, image:fileToBase64(file)}))
+      try {
+        const base64 = await fileToBase64(file) // Await the conversion to base64
+        setRegister(prevRegister => ({
+          ...prevRegister,
+          image: base64
+        }))
+      } catch (error) {
+        console.error("Error converting file to base64", error)
+      }
     }
   }
 
   const handleSubmit = (e)  =>{
     e.preventDefault()
-    // const validationError = passwordValidate(Register.passwd)
-    // if(!validationError){
+    const validationError = validateRegisterForm(register);
+    if(!validationError){
       console.log(register);
       navigate("/profile")
-    // }
+    }
   }
   return (
     <div
@@ -52,14 +61,16 @@ export default function Register() {
       <form onSubmit={handleSubmit}>
         <div className="container ">
           <div className="text-center">
-            <img src={register.image || avatar} className="h-50 w-50 border rounded-circle shadow" alt="..." />
-            <input type='file' style={{ display: 'none' }} onChange={handleFileChange}/>
+            <label htmlFor='imageInput'>
+            <img src={register.image || avatar} className="h-50 w-50 border rounded-circle shadow" style={{ cursor: 'pointer' }}  alt="..." />
+            </label>
+            <input id='imageInput' type='file' style={{ display: 'none' }} onChange={handleFileChange}/>
           </div>
 
           <div className="container mt-4">
-            <input type="email" name='email' value={register.email} onChange={handleInputChange}className="form-control" placeholder='abc@gmail.com' />
-            <input type="text" name='username' value={register.username} onChange={handleInputChange}className="form-control" placeholder='john_doe' />
-            <input type="password" name='password' value={register.email} onChange={handleInputChange}className="form-control" placeholder='password' />
+            <input type="email" name='email' value={register.email} autocomplete="email" onChange={handleInputChange}className="form-control" placeholder='abc@gmail.com' />
+            <input type="text" name='username' value={register.username} autocomplete="username" onChange={handleInputChange}className="form-control" placeholder='john_doe' />
+            <input type="password" name='password' value={register.password} autocomplete="new-password" onChange={handleInputChange}className="form-control" placeholder='password' />
             <button className='btn btn-primary w-100 mt-4' type='submit'>Sign In</button>
           </div>
 
